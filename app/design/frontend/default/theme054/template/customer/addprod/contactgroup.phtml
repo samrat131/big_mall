@@ -1,0 +1,119 @@
+<?php
+$id = $this->getRequest()->getParam('id', false);
+if(is_numeric($id))
+{
+	$buttonText = 'Update Group';
+	$mode = 'edit';
+	
+	$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+	$sql = "SELECT * FROM bigmall_contactlistgroup WHERE id=".$id;
+	//echo $sql; 
+	$result = $db->query($sql);
+	if ($result)
+	{
+		while ($row = $result->fetch(PDO::FETCH_ASSOC))
+		{
+			$name = $row['name'];
+		}
+	}
+}
+else
+{
+	$buttonText = 'Add Group';
+	$mode = 'add';
+	$name = '';
+}
+?>
+<script type="text/javascript">
+function goBack()
+  {
+   window.location = 'manage-sms.php';
+  return false;
+  }
+</script>
+<div class="page-title">
+  <h1>Add Contact Group</h1>
+</div>
+<div class="InnerText">
+<form name="frm_group" action="<?php echo Mage::getUrl('*/*/formPostSms'); ?>" method="post">
+	<?php echo $this->getBlockHtml('formkey')?>
+	<input type="hidden" name="customer_id" value="<?php echo $currentCustomerId; ?>" />
+	<input type="hidden" name="group_type" value="contactgroup" />
+	
+	<?php if(is_numeric($id)) { ?>
+	<input type="hidden" name="id" value="<?php echo $id; ?>" />
+	<?php } ?>
+	<input type="hidden" name="mode" value="<?php echo $mode; ?>" />
+	
+    <table width="100%" cellspacing="5" border="0">
+      <tbody>
+        <tr>
+          <td width="19%" height="35px" class="text3">Group  Name :</td>
+          <td height="35px" class="text3" colspan="2"><input class="input-text" type="text" value="<?php echo $name; ?>" id="name" name="name" />
+            <span style="color:#F00"> *</span></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td colspan="2">&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="2">
+            <div style="float:left; margin-right:5px" id="Button">
+              <div>
+                <button class="button"><span><span><?php echo $buttonText; ?></span></span></button>
+              </div>
+            </div></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td colspan="2">&nbsp;</td>
+        </tr>
+      </tbody>
+    </table>
+  </form>
+</div>
+
+<script type="text/javascript">
+function delete_item(id,title,tbl){
+	var r=confirm("Do you want to delete item :"+title);
+	if (r==true)
+	{
+		var loc ='<?php echo Mage::getUrl('*/*/delete/'); ?>id/'+id+'/tbl/'+tbl;
+		window.location =loc;
+		//alert(loc);
+	}
+	else
+	{
+		return false;
+	} 		
+}
+</script>
+
+<div style="margin-top:20px;">
+<table class="member-grid" width="100%" border="1" cellspacing="0" cellpadding="10">
+  <tr>
+    <th>Group Name</th>
+    <th>Actions</th>
+  </tr>
+<?php 
+if(is_numeric($currentCustomerId))
+{
+	$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+	$result = $db->query("SELECT * FROM bigmall_contactlistgroup WHERE cid=".$currentCustomerId."");
+	if ($result)
+	{
+		while ($row = $result->fetch(PDO::FETCH_ASSOC))
+		{ ?>
+		  <tr>
+			<td><?php echo $row['name'] ?></td>
+			<td><a href="<?php echo Mage::getUrl('*/*/*/id/'.$row['id']); ?>">Edit</a> / <a onclick="delete_item('<?php echo $row['id'] ?>','<?php echo $row['name'] ?>','bigmall_contactlistgroup');" href="#">Delete</a></td>
+		  </tr>
+		<?php 
+		}
+	}
+}	
+?>
+</table>
+</div>
+

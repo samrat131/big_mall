@@ -1,0 +1,33 @@
+<div class="left">
+<?php /*?><div style="width:747px; padding-top:3px;"><?php */?>
+<script type="text/javascript">
+// choose your transition type, ex: fade, scrollUp, shuffle, etc...
+jQuery(document).ready(function() {
+    jQuery('.slideshow').cycle({
+		fx: 'fade'
+		//next:   '#next2', 
+	   // prev:   '#prev2'
+	});
+});
+</script>
+<div class="slideshow">
+<?php 
+$mediaUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
+$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+$sql = "SELECT * FROM `sliders` WHERE `start_date`<= CURDATE() and `end_date`>= CURDATE() ";
+//$result = $db->query("SELECT * FROM sliders CURDATE() >= start_date AND CURDATE() <= end_date");
+$result = $db->query($sql);
+if ($result)
+{
+	while ($row = $result->fetch(PDO::FETCH_ASSOC))
+	{ ?>
+	<img src="<?php echo $mediaUrl.$row['main_file_url']; ?>" width="750" height="517" style="border:0px" />
+	<?php 
+	}
+}
+?>
+</div>
+<?php /*?>
+<div class="slider-navi" style="text-align:right;"><a href="#prev" id="prev2">Prev</a>&nbsp;<a href="#next" id="next2">Next</a></div>
+</div><?php */?>
+</div>

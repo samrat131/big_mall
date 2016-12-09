@@ -1,0 +1,13 @@
+<?php
+//$catId = 34;
+$catId = 29;
+$fcat = Mage::getModel('catalog/category')->load($catId);
+$collection = Mage::getModel('catalog/product')->getCollection();
+$collection->addAttributeToFilter('attribute_set_id', '9');
+$collection->setOrder('created_at', 'desc');
+$collection->addAttributeToSelect('*');
+//$collection->addCategoryFilter($fcat);
+$magento_block = Mage::getSingleton('core/layout');
+$productsHtml  = $magento_block->createBlock('catalog/product_list');
+$productsHtml ->setTemplate('catalog/product/list-deal.phtml')->setCollection($collection);
+echo $productsHtml ->toHTML();

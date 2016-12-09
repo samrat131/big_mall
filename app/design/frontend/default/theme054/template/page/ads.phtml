@@ -1,0 +1,53 @@
+<script type="text/javascript" src="http://cloud.github.com/downloads/malsup/cycle/jquery.cycle.all.latest.js"></script>
+
+<script type="text/javascript">
+// choose your transition type, ex: fade, scrollUp, shuffle, etc...
+jQuery(document).ready(function() {
+    jQuery('.slideshow-ads').cycle({
+		fx: 'fade'
+		//next:   '#next2', 
+	   // prev:   '#prev2'
+	});
+});
+</script>
+
+
+<script type="text/javascript">
+	function adsClick(id){
+		var formUrl = '<?php echo $this->getUrl('ads/index/updateviewcount2s3fsd4sd32'); ?>'+'id/'+id;
+		new Ajax.Request(formUrl,
+		  {
+			method:'get',
+			//parameters: {qty: itemQty},
+			onSuccess: function(transport){
+			  //var response = transport.responseText || "no-response";
+			  var json = transport.responseText.evalJSON();
+				/*$('id_ajaxcartpro_progress').hide(); 
+				$('cur-cart-qty').update(json.qty+" items");
+				$('checkout-popup-txt').update(json.msg+"\n added to cart.");
+				$('checkout-popup').show(); */
+			},
+			onCreate : function(){ 
+				//$('id_ajaxcartpro_progress').show(); 
+			},
+			onComplete: function(){ 
+				//$('id_ajaxcartpro_progress').hide(); 
+				//$('checkout-popup').show(); 
+				//alert('comepse');
+			},
+			onFailure: function(){ alert('Something went wrong...') }
+		  });		
+	}
+</script>
+<div class="slideshow-ads">
+<?php 
+$mediaUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
+$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+$result = $db->query("SELECT * FROM ads WHERE place='top-header' ORDER BY sort_order");
+if ($result)
+{
+  while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+  ?><a onclick="adsClick(<?php echo $row['ads_id']; ?>);" target="_blank" class="ads-image" href="<?php echo $row['link_url']; ?>"><img width="611" height="81" src="<?php echo $mediaUrl.$row['main_file_url']; ?>"></a><?php 
+	} 
+} ?>
+</div>

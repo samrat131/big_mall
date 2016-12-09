@@ -1,0 +1,231 @@
+<?php
+
+/* get page name/indentifier */
+//echo $pageTitle = Mage::getSingleton('cms/page')->getIdentifier(); 
+/* Magento get front controller name */
+//echo Mage::app()->getFrontController()->getRequest()->getRouteName();
+# get Router name
+//echo Mage::app()->getRequest()->getRouteName();
+
+$controller = Mage::app()->getRequest()->getControllerName();
+$module = Mage::app()->getRequest()->getModuleName();
+$action = Mage::app()->getRequest()->getActionName();
+
+$currentCustomerId = Mage::getSingleton('customer/session')->getCustomer()->getId();
+
+//echo $this->getMessagesBlock()->getGroupedHtml();
+
+if($action=='about') {
+
+	$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+	$sql = "SELECT * FROM member_meta WHERE meta_key='about' AND customer_id =".$currentCustomerId;
+	//echo $sql;
+	$result = $db->query($sql);
+	if ($result)
+	{
+		while ($row = $result->fetch(PDO::FETCH_ASSOC))
+		{
+			$meta_value = $row['meta_value'];
+		}
+	}
+
+?>
+
+<div class="page-title">
+  <h1>About</h1>
+</div>
+<form name="frm_about" action="<?php echo Mage::getUrl('*/*/formPostMeta'); ?>" method="post">
+<?php echo $this->getBlockHtml('formkey')?>
+<input type="hidden" name="customer_id" value="<?php echo $currentCustomerId; ?>" />
+<input type="hidden" name="meta_key" value="about" />
+
+  <span style="color:#008000"></span><br>
+  <textarea name="about" cols="80" rows="10" style="height:180px"><?php echo $meta_value; ?></textarea>
+  <br />
+  <br />
+  <button class="button"><span><span>Update</span></span></button>
+</form>
+<?php
+}
+?>
+<?php
+if($action=='news') {
+
+	$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+	$sql = "SELECT * FROM member_meta WHERE meta_key='news' AND customer_id =".$currentCustomerId;
+	//echo $sql;
+	$result = $db->query($sql);
+	if ($result)
+	{
+		while ($row = $result->fetch(PDO::FETCH_ASSOC))
+		{
+			$meta_value = $row['meta_value'];
+		}
+	}
+
+
+?>
+<div class="page-title">
+  <h1>News</h1>
+</div>
+<form name="frm_about" action="<?php echo Mage::getUrl('*/*/formPostMeta'); ?>" method="post">
+<?php echo $this->getBlockHtml('formkey')?>
+<input type="hidden" name="customer_id" value="<?php echo $currentCustomerId; ?>" />
+<input type="hidden" name="meta_key" value="news" />
+
+  <span style="color:#008000"></span><br>
+  <textarea name="news" cols="80" rows="10" style="height:180px"><?php echo $meta_value; ?></textarea>
+  <br />
+  <br />
+  <button class="button"><span><span>Update</span></span></button>
+</form>
+<?php
+}
+?>
+<?php
+if($action=='terms') {
+
+	$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+	$sql = "SELECT * FROM member_meta WHERE meta_key='terms' AND customer_id =".$currentCustomerId;
+	//echo $sql;
+	$result = $db->query($sql);
+	if ($result)
+	{
+		while ($row = $result->fetch(PDO::FETCH_ASSOC))
+		{
+			$meta_value = $row['meta_value'];
+		}
+	}
+
+?>
+<div class="page-title">
+  <h1>Terms and Condition</h1>
+</div>
+<form name="frm_about" action="<?php echo Mage::getUrl('*/*/formPostMeta'); ?>" method="post">
+<?php echo $this->getBlockHtml('formkey')?>
+<input type="hidden" name="customer_id" value="<?php echo $currentCustomerId; ?>" />
+<input type="hidden" name="meta_key" value="terms" />
+
+  <span style="color:#008000"></span><br>
+  <textarea name="terms" cols="80" rows="10" style="height:180px"><?php echo $meta_value; ?></textarea>
+  <br />
+  <br />
+  <button class="button"><span><span>Update</span></span></button>
+</form>
+<?php
+}
+?>
+<?php
+if($action=='partner') {
+
+$link_id = $this->getRequest()->getParam('id', false);
+if(is_numeric($link_id))
+{
+	$buttonText = 'Update Partner';
+	$mode = 'edit';
+	
+	$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+	$sql = "SELECT * FROM member_link WHERE link_id=".$link_id;
+	//echo $sql; 
+	$result = $db->query($sql);
+	if ($result)
+	{
+		while ($row = $result->fetch(PDO::FETCH_ASSOC))
+		{
+			$partner_name = $row['link_name'];
+			$partner_link = $row['link_url'];
+		}
+	}
+}
+else
+{
+	$buttonText = 'Add Partner';
+	$mode = 'add';
+	$partner_name = '';
+	$partner_link = '';
+}
+?>
+<div class="page-title">
+  <h1>Add Partner</h1>
+</div>
+<form name="addcat" method="post" action="<?php echo Mage::getUrl('*/*/formPost'); ?>" enctype="multipart/form-data">
+<?php echo $this->getBlockHtml('formkey')?>
+<input type="hidden" name="customer_id" value="<?php echo $currentCustomerId; ?>" />
+<?php if(is_numeric($link_id)) { ?>
+<input type="hidden" name="link_id" value="<?php echo $link_id; ?>" />
+<?php } ?>
+<input type="hidden" name="mode" value="<?php echo $mode; ?>" />
+  <table width="100%" border="0" cellspacing="5">
+    <tbody>
+      <tr>
+        <td width="25%" height="35px" class="text3">Partner Name :</td>
+        <td width="75%" height="35px" class="text3"><input type="text" name="partner_name" id="partner_name" class="input-text" value="<?php echo $partner_name; ?>" /></td>
+      </tr>
+      <tr>
+        <td class="text3" height="35px" valign="top">Link :</td>
+        <td class="text3" height="35px"><input type="text" name="partner_link" id="partner_link" class="input-text" value="<?php echo $partner_link; ?>" />
+          <span style="color:#F00"> *</span>(http://www.domain.com/)</td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td><div id="Button" style="float:left; margin-right:5px">
+            <div>
+              <button class="button"><span><span><?php echo $buttonText; ?></span></span></button>
+            </div>
+          </div>
+          </td>
+      </tr>
+    </tbody>
+  </table>
+</form>
+<script type="text/javascript">
+function delete_item(id,title){
+	var r=confirm("Do you want to delete item :"+title);
+	if (r==true)
+	{
+		var loc ='<?php echo Mage::getUrl('*/*/delete/'); ?>id/'+id;
+		window.location =loc;
+		//alert(loc);
+	}
+	else
+	{
+		return false;
+	} 		
+}
+</script>
+
+<div style="margin-top:20px;">
+<table class="member-grid" width="100%" border="1" cellspacing="0" cellpadding="10">
+  <tr>
+    <th>Partner Name</th>
+    <th>Link</th>
+    <th>Actions</th>
+  </tr>
+<?php 
+if(is_numeric($currentCustomerId))
+{
+	$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+	$result = $db->query("SELECT * FROM member_link WHERE customer_id=".$currentCustomerId."");
+	if ($result)
+	{
+		while ($row = $result->fetch(PDO::FETCH_ASSOC))
+		{ ?>
+		  <tr>
+			<td><?php echo $row['link_name'] ?></td>
+			<td><?php echo $row['link_url'] ?></td>
+			<td><a href="<?php echo Mage::getUrl('*/*/*/id/'.$row['link_id']); ?>">Edit</a> / <a onclick="delete_item('<?php echo $row['link_id'] ?>','<?php echo $row['link_name'] ?>');" href="#">Delete</a></td>
+		  </tr>
+		<?php 
+		}
+	}
+}	
+?>
+</table>
+</div>
+<?php
+}
+?>

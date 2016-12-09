@@ -1,0 +1,12 @@
+<?php 
+$mediaUrl = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
+$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+$result = $db->query("SELECT * FROM ads WHERE place='mid-body' ORDER BY sort_order LIMIT 0,4");
+if ($result)
+{
+  echo '<div class="left">';
+  while ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+  ?><a onclick="adsClick(<?php echo $row['ads_id']; ?>);" target="_blank" class="product-image" href="<?php echo $row['link_url']; ?>"><img width="187" height="109" src="<?php echo $mediaUrl.$row['main_file_url']; ?>"></a><?php 
+  }
+  echo '</div>';
+} ?>

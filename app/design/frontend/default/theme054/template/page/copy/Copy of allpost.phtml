@@ -1,0 +1,84 @@
+<?php
+	//$catId = 29;
+	//$collection = Mage::getModel('catalog/product')->getCollection();
+	
+	//$collection = Mage::getResourceModel('catalog/product_collection');
+	//$collection->setVisibility(Mage::getSingleton('catalog/product_visibility')->getVisibleInCatalogIds());
+	
+	
+			$collection = Mage::getModel('catalog/product')->getCollection();
+			$collection
+			->addAttributeToSelect(Mage::getSingleton('catalog/config')->getProductAttributes())
+			->addMinimalPrice()
+			->addFinalPrice()
+			->addTaxPercents();
+
+			Mage::getSingleton('catalog/product_status')->addVisibleFilterToCollection($collection);
+			Mage::getSingleton('catalog/product_visibility')->addVisibleInCatalogFilterToCollection($collection);
+	
+	
+	//$collection->addAttributeToFilter('status', 1);
+	//$collection->addAttributeToFilter('visibility', 4);
+	//$collection->addAttributeToFilter('type_id', 'simple');
+	//$collection->setVisibility(Mage::getSingleton('catalog/product_visibility')->getVisibleInCatalogIds());
+	
+//	$collection->addAttributeToFilter('attribute_set_id', 4);
+//	$collection->addAttributeToSelect('*');
+
+    //$collection->setPageSize(2);
+    //$collection->setCurPage(6);
+	
+	//Mage::getSingleton('catalog/product_visibility')->addVisibleInCatalogFilterToCollection($collection);
+	
+	
+//	Mage::getSingleton('catalog/product_status')->addVisibleFilterToCollection($collection);
+   //Mage::getSingleton('catalog/product_visibility')->addVisibleInCatalogFilterToCollection($collection);	
+	
+	/* I'm almost positive 'e' is the alias used for catalog_product_entity, check your query with 
+	echo (string) $products->getSelect(); if it doesn't work */
+	//$collection->getSelect()->join(array('cats' => 'catalog_category_product'), 'cats.product_id = e.entity_id');
+	//$collection->getSelect()->where('cats.category_id', array('neq' => $catId));
+	
+    //Mage::getSingleton('catalog/product_visibility')->addVisibleInCatalogFilterToCollection($collection);       
+	//$collection->addAttributeToFilter('visibility', array('in' => array(Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG, Mage_Catalog_Model_Product_Visibility::VISIBILITY_BOTH) ));
+	
+    $magento_block = Mage::getSingleton('core/layout');
+    $productsHtml  = $magento_block->createBlock('catalog/product_list');
+	
+    $productsHtml->setTemplate('catalog/product/list.phtml')->setCollection($collection);
+    echo $productsHtml ->toHTML();
+
+//exit;
+/*$visibility     = array(
+                      Mage_Catalog_Model_Product_Visibility::VISIBILITY_BOTH,
+                      Mage_Catalog_Model_Product_Visibility::VISIBILITY_IN_CATALOG
+                  );
+
+$storeId    = Mage::app()->getStore()->getId();
+
+$_featcategory = Mage::getModel('catalog/category')->load(22);
+ //replace 68 with the id of your featured category
+$_productCollection = Mage::getResourceModel('catalog/product_collection')
+						->addAttributeToSelect('*')
+						->addAttributeToFilter('visibility', $visibility)
+						->setStoreId($storeId)
+						->addStoreFilter($storeId)
+						->addCategoryFilter($_featcategory) //feature category to list first
+						->setPageSize(12);	// number of products to list per page view*/
+						
+//$_productCollection = Mage::getModel('catalog/product')->getCollection();
+//Magento does not load all attributes by default
+//Add as many as you like
+//$_productCollection->addAttributeToSelect('*');
+						
+/*foreach($_productCollection as $product) {
+//do something
+	echo $product->getName(); 
+	echo '<br>';
+}*/
+
+
+
+    //$_productCollection=$this->getLoadedProductCollection();
+    //$_helper = $this->helper('catalog/output');
+	

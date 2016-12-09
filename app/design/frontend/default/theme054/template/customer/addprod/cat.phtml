@@ -1,0 +1,244 @@
+<?php
+//print_r($_REQUEST);
+$id = $this->getRequest()->getParam('id', false);
+
+$catName = '';
+$catDesc = '';
+
+if(is_numeric($id)) {
+	$_category = Mage::getModel('catalog/category')->load($id);
+	
+	$catName = $_category->getName();
+	$catDesc = $_category->getDescription();
+	$catImg = $_category->getImageUrl();
+}
+
+$currentCustomerId = Mage::getSingleton('customer/session')->getCustomer()->getId();
+if(is_numeric($currentCustomerId))
+{
+	$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+	$result = $db->query("SELECT * FROM member_info WHERE customer_id=".$currentCustomerId." LIMIT 0,1");
+	if ($result)
+	{
+		while ($row = $result->fetch(PDO::FETCH_ASSOC))
+		{
+			//$current_cat_id = $row['cat_id'];
+			//$current_image_url = $row['image_url'];
+			$child_cat_id = $row['child_cat_id'];
+		}
+	}
+}	
+
+if( $_POST['cat_update']=='yes' and $_POST['cat_name']!='' ) {
+	$catname = $_POST['cat_name'];
+	$cat_description = $_POST['cat_description'];
+	
+	$_category->setName($catname);
+	$data['description'] = $cat_description;
+	
+	
+	if(isset($_FILES['cat_img']['name']) and $_FILES['cat_img']['name']!='' ) {
+		try {
+			 $uploader = new Varien_File_Uploader('cat_img');
+			 $uploader->setAllowedExtensions(array('jpg','gif','png'));
+			 $uploader->setAllowRenameFiles(false);
+			 $uploader->setFilesDispersion(false);					 
+			 $path = Mage::getBaseDir('media').DS."catalog".DS."category".DS;
+			 
+			 $file_name = str_replace(" ","_",$_FILES['cat_img']['name']);
+			 $file_name = $currentCustomerId.'_'.time().'_'.strtolower($file_name);
+			 
+			 $uploader->save($path, $file_name);
+			 $data['thumbnail'] = $file_name;
+			 $data['image'] = $file_name;
+			 
+		} catch (Exception $e) {
+			  
+		}
+	}
+	
+	
+	$_category->addData($data);
+	try {
+	  $_category->save(); 
+	  //echo "Upddated <br /> ";
+	  Mage::getSingleton('core/session', array('name'=>'frontend'))->addSuccess('Category updated.');
+	  Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addcat/index/'));
+	}
+	catch (Exception $e){
+		//echo "Failed <br />";
+		  Mage::getSingleton('core/session', array('name'=>'frontend'))->addSuccess('Update fail.');
+		  Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addcat/index/'));
+		
+	}
+}
+
+if( isset($_POST['cat_submit']) ) {
+
+	if( $_POST['cat_submit']=='yes' and $_POST['cat_name']!='' ) {
+	
+	
+	
+		$catname = $_POST['cat_name'];
+		$cat_description = $_POST['cat_description'];
+		
+		$_cat = new Mage_Catalog_Model_Category();
+		$_cat->setName($catname);
+		$_cat->setUrlKey($catname);
+		$_cat->setIsActive(1);
+		$parentCategory = Mage::getModel('catalog/category')->load($child_cat_id);
+		$_cat->setPath($parentCategory->getPath());     
+		$_cat->setIsAnchor(1);
+		
+		$data['display_mode'] = 'PRODUCTS_AND_PAGE';
+		$data['description'] = $cat_description;
+		//$data['page_layout'] = 'one_column';
+		//$media = Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_MEDIA);
+		//$path = $media.'catalog/category/'.'Sunset.jpg';
+		
+		if(isset($_FILES['cat_img']['name']) and $_FILES['cat_img']['name']!='' ) {
+			try {
+				 $uploader = new Varien_File_Uploader('cat_img');
+				 $uploader->setAllowedExtensions(array('jpg','gif','png'));
+				 $uploader->setAllowRenameFiles(false);
+				 $uploader->setFilesDispersion(false);					 
+				 $path = Mage::getBaseDir('media').DS."catalog".DS."category".DS;
+				 
+				 $file_name = str_replace(" ","_",$_FILES['cat_img']['name']);
+				 $file_name = $currentCustomerId.'_'.time().'_'.strtolower($file_name);
+				 
+				 $uploader->save($path, $file_name);
+				 $data['thumbnail'] = $file_name;
+				 $data['image'] = $file_name;
+				 
+			} catch (Exception $e) {
+				  
+			}
+		}
+		
+		$_cat->addData($data);
+		
+		try {
+		  $_cat->save(); 
+		  //echo $_cat->getId(); 
+		  //echo "Suceeded <br /> ";
+		  Mage::getSingleton('core/session', array('name'=>'frontend'))->addSuccess('Category added.');
+		  Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addcat/index/'));
+		  
+		}
+		catch (Exception $e){
+			//echo "Failed <br />";
+		  Mage::getSingleton('core/session', array('name'=>'frontend'))->addError('Fail.');
+		  Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addcat/index/'));
+			
+		}
+	}
+	else
+	{
+		$msg['err'] = 'Plesae input category name';
+		  Mage::getSingleton('core/session', array('name'=>'frontend'))->addError($msg['err']);
+		  Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addcat/index/'));
+		
+	}
+}
+
+/*$storeId = Mage::app()->getStore()->getId();
+$category = Mage::getModel('catalog/category');
+$category->setStoreId($storeId);
+$parentId = Mage::app()->getStore($storeId)->getRootCategoryId();
+$parentCategory = Mage::getModel('catalog/category')->load($parentId);
+$category->setPath($parentCategory->getPath());
+$category->addData( array('name'=>'goodsone', 'is_active'=>'1') );
+$category->setAttributeSetId($category->getDefaultAttributeSetId());
+try {
+  $category->save();
+  echo "Suceeded <br /> ";
+}
+catch (Exception $e){
+	echo "Failed <br />";
+}*/
+
+?>
+
+<div class="page-title">
+  <h1>Add Category</h1>
+</div>
+<form id="addcat" name="addcat" method="post" action="" enctype="multipart/form-data">
+  <table width="100%" border="0" cellspacing="5">
+    <tbody>
+      <tr>
+        <td width="25%" height="35px" class="text3">Category Name :</td>
+        <td width="75%" height="35px" class="text3"><input value="<?php echo $catName ?>" class="input-text required-entry" type="text" name="cat_name" id="cat_name">
+          <span style="color:#F00"> *</span></td>
+      </tr>
+      <tr>
+        <td class="text3" height="35px">Category Image:</td>
+        <td class="text3" height="35px">
+		<?php if($catImg!='') {?>
+		<img src="<?php echo $catImg?>" width="150" /><br />
+		<?php } ?>
+		<input type="file" name="cat_img" /></td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>	  
+      <tr>
+        <td class="text3" height="35px" valign="top">Description :</td>
+        <td class="text3" height="35px"><textarea name="cat_description" id="cat_description" style="width:350px; height:120px"><?php echo $catDesc ?></textarea></td>
+      </tr>
+      <tr>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+      <tr>
+        <td></td>
+        <td><div id="Button" style="float:left; margin-right:5px">
+            <button class="button" onclick="return validation()"><span><span>Add Category</span></span></button>
+          </div>
+          <?php /*?><div id="Button" style="float:left">
+            <button class="button" onclick="document.location.href='manage-category.php';return false;"><span><span>Back</span></span></button>
+          </div><?php */?></td>
+      </tr>
+    </tbody>
+  </table>
+  <input type="hidden" name="customer_id" value="<?php echo $currentCustomerId; ?>" />
+  <?php if(is_numeric($id)) { ?>
+  	<input type="hidden" name="cat_update" value="yes" />
+  <?php } else { ?>
+  	<input type="hidden" name="cat_submit" value="yes" />
+  <?php } ?>
+</form>
+<script type="text/javascript">
+//<![CDATA[
+var dataForm = new VarienForm('addcat', true);
+//]]>
+</script>
+<div style="margin-top:20px;">
+<table class="member-grid" width="100%" border="1" cellspacing="0" cellpadding="10">
+  <tr>
+    <th>Category Name</th>
+    <th align="center">Total Products</th>
+    <th>Actions</th>
+  </tr>
+
+<?php 
+$root_category = Mage::getModel('catalog/category')->load($child_cat_id);
+$subcategories = $root_category->getChildren();
+if($subcategories):
+foreach(explode(',',$subcategories) as $subcategory) :
+$_category = Mage::getModel('catalog/category')->load($subcategory);
+$prodCollection = Mage::getResourceModel('catalog/product_collection')->addCategoryFilter($_category);
+?>
+  <tr>
+    <td><?php echo $_category->getName() ?></td>
+    <td align="center"><?php echo $prodCollection->count() ?></td>
+    <td><a href="<?php echo $this->getUrl('customer/addcat/index/id/'.$_category->getId()); ?>">Edit</a><!-- / Delete--></td>
+  </tr>
+<?php //echo $_category->getId() ?>
+<?php 
+endforeach;
+endif;
+?>
+</table>
+</div>

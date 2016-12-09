@@ -1,0 +1,723 @@
+<script type="text/javascript" src="<?php echo $this->getSkinUrl('js/'); ?>jquery.MultiFile.js"></script>
+<style type="text/css">
+.calendar{z-index:104;}
+</style>
+<?php
+//echo strtotime('now');
+//$attributeSetModel = Mage::getModel("eav/entity_attribute_set");
+//$attributeSetModel->load(9);
+//echo $attributeSetName  = $attributeSetModel->getAttributeSetName();
+
+$id = $this->getRequest()->getParam('id', false);
+
+if(Mage::getSingleton('customer/session')->isLoggedIn())
+{
+	$groupId = Mage::getSingleton('customer/session')->getCustomerGroupId();
+	$group = Mage::getModel('customer/group')->load($groupId);
+	$groupName = $group->getCode();
+}
+
+$name = '';
+$description = '';
+$short_description = '';
+$sku = '';
+$weight = '';
+$qty = '';
+$category = '';
+$price = '';
+$special_price = ''; 
+$deal_expire_date = '';
+$product_image = '';
+
+if(is_numeric($id)) {
+	$_product = Mage::getModel('catalog/product')->load($id);
+	
+	$name = $_product->getName();
+	$description = $_product->getDescription();
+	$short_description = $_product->getShortDescription();
+	$sku = $_product->getSku();
+	$weight = $_product->getWeight();
+	$qty = (int) Mage::getModel('cataloginventory/stock_item')->loadByProduct($_product)->getQty();
+	$category = '';
+	$price = round($_product->getPrice(),2);
+	
+	if($groupName=='Deal') {
+		$special_price = round($_product->getSpecialPrice(),2);
+		$deal_expire_date = $_product->getNewsToDate();
+		
+		$anyDate = $deal_expire_date;
+		$dateTimestamp = Mage::getModel('core/date')->timestamp(strtotime($anyDate));
+		$deal_expire_date = date('m/d/Y', $dateTimestamp);
+	}
+	
+	$product_image = $_product->getImageUrl();
+	$category = $_product->getCategoryIds();
+	//print_r($category);
+	$category = $category[1];
+}
+
+function check_empty($arg){
+	$c=0;
+	if(!is_array($arg))
+	return;
+	foreach($arg as $args){
+		if($_POST[$args] == ''){
+			$c++;
+		}
+	}
+	if($c>0)
+		return false;
+	else
+	{
+		return true;
+	}
+}
+function check_numeric($arg){
+	$c=0;
+	if(!is_array($arg))
+		return;
+	foreach($arg as $args){
+		if(!is_numeric($_POST[$args])){
+			$c++;
+		}
+	}
+	if($c>0)
+		return false;
+	else
+	{
+		return true;
+	}
+}
+
+$currentCustomerId = Mage::getSingleton('customer/session')->getCustomer()->getId();
+if(is_numeric($currentCustomerId))
+{
+	$db = Mage::getSingleton('core/resource')->getConnection('core_read');
+	$result = $db->query("SELECT * FROM member_info WHERE customer_id=".$currentCustomerId." LIMIT 0,1");
+	if ($result)
+	{
+		while ($row = $result->fetch(PDO::FETCH_ASSOC))
+		{
+			//$current_cat_id = $row['cat_id'];
+			//$current_image_url = $row['image_url'];
+			$child_cat_id = $row['child_cat_id'];
+		}
+	}
+}
+
+if($groupName=='Deal') {
+	$args = array('name','sku','description','price','qty','weight','selling_price');
+	$args_numeric = array('price','qty','weight','selling_price');
+} else {
+	$args = array('name','sku','description','price','qty','weight','category');
+	$args_numeric = array('price','qty','weight');
+}
+
+if($_POST['product_update']=='yes' and check_empty($args) and check_numeric($args_numeric) )
+{
+
+	//$psku = $currentCustomerId.'-'.$_POST['sku'];
+	//$_product->setSku($psku);
+	$_product->setName($_POST['name']);
+	$_product->setDescription($_POST['description']);
+	$_product->setShortDescription($_POST['short_description']);
+	$_product->setPrice($_POST['price']); 
+	$_product->setWeight($_POST['weight']);
+	
+	
+	if($groupName=='Deal') {
+		$_product->setNewsToDate($_POST['deal_expire_date']);
+		$_product->setSpecialPrice($_POST['selling_price']);
+	} else {
+		$_product->setCategoryIds(array($child_cat_id, $_POST['category']));
+	}
+	$_product->setStockData(array(
+		'is_in_stock' => 1,
+		'qty' => $_POST['qty']
+	));
+	
+	$counter = 0;
+	for($i=0;$_FILES['product_image']['name'][$i];$i++)
+	{
+		$name = $_FILES['product_image']['name'][$i];
+		$error = $_FILES['product_image']['error'][$i];
+		$size = $_FILES['product_image']['size'][$i];
+		
+		if($name!='' and $error==0 and $size>0)
+		{
+			$_FILES['product_image'.$i]['name'] = $_FILES['product_image']['name'][$i];
+			$_FILES['product_image'.$i]['type'] = $_FILES['product_image']['type'][$i];
+			$_FILES['product_image'.$i]['tmp_name'] = $_FILES['product_image']['tmp_name'][$i];
+			$_FILES['product_image'.$i]['error'] = $_FILES['product_image']['error'][$i];
+			$_FILES['product_image'.$i]['size'] = $_FILES['product_image']['size'][$i];
+			$counter++;
+		}
+	}
+
+	$mediaArray = array();
+	
+	for($i=0;$i<=$counter;$i++)
+	{
+		try {
+			 $uploader = new Varien_File_Uploader('product_image'.$i);
+			 $uploader->setAllowedExtensions(array('jpg','gif','png'));
+			 $uploader->setAllowRenameFiles(false);
+			 $uploader->setFilesDispersion(false);					 
+			 $path = Mage::getBaseDir('media').DS."import".DS;
+			 $file_name = str_replace(" ","_",$_FILES['product_image'.$i]['name']);
+			 $file_name = $currentCustomerId.'_'.time().'_'.strtolower($file_name);
+			 $uploader->save($path, $file_name);
+			 $mediaArray['image'.$i] = $file_name;
+		} catch (Exception $e) {
+			 echo $e;
+		}
+	}
+	
+	$mArray = array('thumbnail','small_image','image');
+	// Remove unset images, add image to gallery if exists
+	$importDir = Mage::getBaseDir('media') . DS . 'import/';
+	$c=0;
+	foreach($mediaArray as $imageType => $fileName) {
+		$filePath = $importDir.$fileName;
+		if ( file_exists($filePath) ) {
+			
+			try {
+				if($c==0)
+					$_product->addImageToMediaGallery($filePath,$mArray,true,false);
+				else
+					$_product->addImageToMediaGallery($filePath,'',true, false);
+			} catch (Exception $e) {
+				echo $e->getMessage();
+			}
+			$c++;
+			
+		} else {
+			$err = "Product does not have an image or the path is incorrect : {$filePath}";
+			Mage::getSingleton('core/session', array('name'=>'frontend'))->addError($err);
+		}
+	}
+	 
+	try {
+		$_product->save();
+		//echo '<h3 class="color-green">Success</h3>';
+		  Mage::getSingleton('core/session', array('name'=>'frontend'))->addSuccess('Updated.');
+		  Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addproduct/index/'));
+	}
+	catch (Exception $e) {
+		//echo '<h3 class="color-red">Error</h3>';
+		  Mage::getSingleton('core/session', array('name'=>'frontend'))->addError('Error.');
+		  Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addproduct/index/'));
+	}
+}
+
+if(isset($_POST['product_submit']) and is_numeric($currentCustomerId) )
+{
+	if($_POST['product_submit']=='yes' and check_empty($args) and check_numeric($args_numeric) )
+	{
+	
+		//print_r($_REQUEST);
+		
+		$product = new Mage_Catalog_Model_Product();
+		 
+		// Build the product
+		$psku = $currentCustomerId.'-'.$_POST['sku'];
+		$product->setSku($psku);
+		$product->setTypeId('simple');
+		$product->setName($_POST['name']);
+		
+		if($groupName=='Deal') {
+			// deal cat id
+			//$catid = 29;
+			$catid = 34;
+			
+			$product->setAttributeSetId(9);
+			$product->setCategoryIds(array($catid));
+			$product->setCustomerId($currentCustomerId);
+			
+			$currentTimestamp = Mage::getModel('core/date')->timestamp(time()); 
+			$fromDate = date('m/d/y', $currentTimestamp);
+			
+			$product->setNewsFromDate($fromDate);
+			$product->setNewsToDate($_POST['deal_expire_date']);
+			$product->setSpecialPrice($_POST['selling_price']);
+		} else {
+			$product->setCategoryIds(array($child_cat_id, $_POST['category']));
+			$product->setAttributeSetId(4);
+		}
+		$product->setWebsiteIDs(array(1)); # Website id, my is 1 (default frontend)
+		$product->setDescription($_POST['description']);
+		$product->setShortDescription($_POST['short_description']);
+		$product->setPrice($_POST['price']); # Set some price
+		 
+		# Custom created and assigned attributes
+
+//		$product->setWidth('my_custom_attribute2_val');
+//		$product->setDepth('my_custom_attribute3_val');
+//		$product->setType('my_custom_attribute4_val');
+		 
+		//Default Magento attribute
+		$product->setWeight($_POST['weight']);
+		 
+		$product->setVisibility(Mage_Catalog_Model_Product_Visibility::VISIBILITY_BOTH);
+		$product->setStatus(1);
+		$product->setTaxClassId(0); # My default tax class
+		$product->setStockData(array(
+			'is_in_stock' => 1,
+			'qty' => $_POST['qty']
+		));
+		
+		$counter = 0;
+		for($i=0;$_FILES['product_image']['name'][$i];$i++)
+		{
+			$name = $_FILES['product_image']['name'][$i];
+			$error = $_FILES['product_image']['error'][$i];
+			$size = $_FILES['product_image']['size'][$i];
+			
+			if($name!='' and $error==0 and $size>0)
+			{
+				$_FILES['product_image'.$i]['name'] = $_FILES['product_image']['name'][$i];
+				$_FILES['product_image'.$i]['type'] = $_FILES['product_image']['type'][$i];
+				$_FILES['product_image'.$i]['tmp_name'] = $_FILES['product_image']['tmp_name'][$i];
+				$_FILES['product_image'.$i]['error'] = $_FILES['product_image']['error'][$i];
+				$_FILES['product_image'.$i]['size'] = $_FILES['product_image']['size'][$i];
+				$counter++;
+			}
+		}
+
+		$mediaArray = array();
+		
+		for($i=0;$i<=$counter;$i++)
+		{
+			try {
+				 $uploader = new Varien_File_Uploader('product_image'.$i);
+				 $uploader->setAllowedExtensions(array('jpg','gif','png'));
+				 $uploader->setAllowRenameFiles(false);
+				 $uploader->setFilesDispersion(false);					 
+				 $path = Mage::getBaseDir('media').DS."import".DS;
+				 $file_name = str_replace(" ","_",$_FILES['product_image'.$i]['name']);
+				 $file_name = $currentCustomerId.'_'.time().'_'.strtolower($file_name);
+				 $uploader->save($path, $file_name);
+				 $mediaArray['image'.$i] = $file_name;
+			} catch (Exception $e) {
+				 echo $e;
+			}
+		}
+		
+		$mArray = array('thumbnail','small_image','image');
+		// Remove unset images, add image to gallery if exists
+		$importDir = Mage::getBaseDir('media') . DS . 'import/';
+		
+		$c=0;
+		foreach($mediaArray as $imageType => $fileName) {
+			$filePath = $importDir.$fileName;
+			if ( file_exists($filePath) ) {
+				
+				try {
+					if($c==0)
+						$product->addImageToMediaGallery($filePath,$mArray,true,false);
+					else
+						$product->addImageToMediaGallery($filePath,'',true, false);
+				} catch (Exception $e) {
+					echo $e->getMessage();
+				}
+				$c++;
+				
+			} else {
+				$err = "Product does not have an image or the path is incorrect : {$filePath}";
+				Mage::getSingleton('core/session', array('name'=>'frontend'))->addError($err);
+			}
+		}
+		
+		$product->setCreatedAt(strtotime('now'));
+		 
+		try {
+			$product->save();
+			$msg= 'Success : Product added.';
+			Mage::getSingleton('core/session', array('name'=>'frontend'))->addSuccess($msg);
+			Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addproduct/index/'));
+		}
+		catch (Exception $e) {
+			//Handle the error
+			$err= 'Error';
+			Mage::getSingleton('core/session', array('name'=>'frontend'))->addError($err);
+			Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addproduct/index/'));
+		}
+	}
+	else
+	{
+		$err= 'Please fill up all the required fields properly, mark with *';
+		Mage::getSingleton('core/session', array('name'=>'frontend'))->addError($err);
+		Mage::app()->getFrontController()->getResponse()->setRedirect($this->getUrl('customer/addproduct/index/'));
+	}
+}
+$productTitle = 'Product';
+
+if($groupName=='Deal') 
+	$title = 'Add Deal';
+else
+{
+	if(is_numeric($id))
+		$title = 'Update Product';
+	else
+		$title = 'Add Product';
+}
+?>
+
+  <div class="page-title">
+  	<h1><?php echo $title; ?></h1>
+  </div>
+  
+  
+<?php 
+if($groupName=='Deal') { 
+	if($_GET['deal_type']=='service')
+		$productTitle = 'Service';
+?>   
+<table width="100%" border="0" cellspacing="5">
+  <tbody>
+	<tr>
+	  <td width="31%" height="35px" class="text3">&nbsp;</td>
+	  <td width="69%" height="35px" class="text3"> 
+<div style="background-color:#FFF8DF; border:1px solid #EE6306; padding:10px; margin-bottom:20px; width:244px;" class="field">
+<input type="radio" onChange="window.location.href='<?php echo $this->getUrl('customer/addproduct/'); ?>?deal_type=product';" value="product" name="deal_type" <?php if($_GET['deal_type']=='product')echo 'checked="checked"' ?> />
+Product (physical goods deliveries)<br />
+<input type="radio" onChange="window.location.href='<?php echo $this->getUrl('customer/addproduct/'); ?>?deal_type=service';" value="service" name="deal_type" <?php if($_GET['deal_type']=='service')echo 'checked="checked"' ?> />
+Service (no goods deliveries)</div></td>
+	</tr>
+  </tbody>
+</table>
+<?php } ?>  
+  
+  
+  <?php if( ($groupName=='Deal' and ($_GET['deal_type']=='product' or $_GET['deal_type']=='service')) or $groupName=='General') { ?>
+  
+  
+
+  <form name="addproduct" action="" method="post" enctype="multipart/form-data" id="form-validate-addproduct">
+    <table width="100%" border="0" cellspacing="5">
+      <tbody>
+	  
+        <?php /*?><tr>
+          <td width="31%" height="35px" class="text3">&nbsp;</td>
+          <td width="69%" height="35px" class="text3"><?php if($groupName=='Deal') { 
+			if($_GET['deal_type']=='service')
+				$productTitle = 'Service';
+		  ?>  
+<div style="background-color:#FFF8DF; border:1px solid #EE6306; padding:10px; margin-bottom:20px; width:244px;" class="field">
+<input type="radio" onChange="window.location.href='<?php echo $this->getUrl('customer/addproduct/'); ?>?deal_type=product';" value="product" name="deal_type" <?php if($_GET['deal_type']=='product')echo 'checked="checked"' ?> />
+Product (physical goods deliveries)<br />
+<input type="radio" onChange="window.location.href='<?php echo $this->getUrl('customer/addproduct/'); ?>?deal_type=service';" value="service" name="deal_type" <?php if($_GET['deal_type']=='service')echo 'checked="checked"' ?> />
+Service (no goods deliveries)</div>
+<?php } ?></td>
+        </tr><?php */?>
+	  
+        <tr>
+          <td width="31%" height="35px" class="text3"><?php echo $productTitle ?> Name :</td>
+          <td width="69%" height="35px" class="text3"><input value="<?php echo $name ?>" class="input-text required-entry" type="text" name="name" id="name" style="width:260px; height:20px">
+            <span style="color:#F00"> *</span></td>
+        </tr>
+        <tr>
+          <td class="text3" height="35px" valign="top"><?php echo $productTitle ?> Description :</td>
+          <td class="text3" height="35px"><textarea class="required-entry" name="description" id="description" style="width:350px; height:120px"><?php echo $description ?></textarea>
+            <span style="color:#F00"> *</span></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+		
+        <tr>
+          <td class="text3" height="35px" valign="top"><?php echo $productTitle ?> Short Description :</td>
+          <td class="text3" height="35px"><textarea class="required-entry" name="short_description" id="short_description" style="width:350px; height:80px"><?php echo $short_description ?></textarea>
+            <span style="color:#F00"> *</span></td>
+        </tr>
+        <tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+
+        <tr>
+          <td width="31%" height="35px" class="text3">SKU :</td>
+          <td width="69%" height="35px" class="text3"><input <?php if($id) { ?> readonly="readonly" <?php } ?> value="<?php echo $sku ?>" class="input-text required-entry" type="text" name="sku" id="sku" style="width:260px; height:20px">
+            <span style="color:#F00"> *</span></td>
+        </tr>
+        <tr>
+          <td width="31%" height="35px" class="text3">Weight :</td>
+          <td width="69%" height="35px" class="text3"><input value="<?php echo $weight ?>" class="input-text required-entry validate-number" type="text" name="weight" id="weight" style="width:260px; height:20px">
+            <span style="color:#F00"> *</span></td>
+        </tr>
+        <tr>
+          <td width="31%" height="35px" class="text3">Qty :</td>
+          <td width="69%" height="35px" class="text3"><input value="<?php echo $qty ?>" class="input-text required-entry validate-digits" type="text" name="qty" id="qty" style="width:260px; height:20px">
+            <span style="color:#F00"> *</span></td>
+        </tr>
+		<?php if($groupName!='Deal') { ?>
+        <tr>
+          <td class="text3" height="35px">Product Category :</td>
+          <td height="35px" class="text3">
+		    <select class="required-entry" name="category" id="category" style="width:265px; height:20px">
+			<option value="">Select Category</option>
+			<?php 
+			$root_category = Mage::getModel('catalog/category')->load($child_cat_id);
+			$subcategories = $root_category->getChildren();
+			foreach(explode(',',$subcategories) as $subcategory){
+			$_category = Mage::getModel('catalog/category')->load($subcategory);
+			$sel ='';
+			if($category==$_category->getId()) $sel = 'selected="selected"';
+			?>
+              <option <?php echo $sel ?> value="<?php echo $_category->getId() ?>"><?php echo $_category->getName() ?></option>
+			<?php } ?>
+            </select>
+            <span style="color:#F00"> *</span> </td>
+        </tr>
+		<?php } ?>
+        <tr>
+          <td class="text3" height="35px"><?php echo $productTitle ?> Price <?php //if($groupName=='Deal') echo '(After discount)'; ?> :</td>
+          <td class="text3" height="35px"><input value="<?php echo $price ?>" class="input-text required-entry validate-number" type="text" name="price" id="price" style="width:260px; height:20px">
+            <span style="color:#F00"> *</span></td>
+        </tr>
+		<?php if($groupName=='Deal') { ?>
+		<tr>
+          <td class="text3" height="35px">Suggested Selling Price :</td>
+          <td class="text3" height="35px"><input value="<?php echo $special_price ?>" class="input-text required-entry validate-number" type="text" name="selling_price" id="selling_price" style="width:260px; height:20px"><span style="color:#F00"> *</span></td>
+        </tr>
+		
+		<tr>
+		  <td>Expire Date : </td>
+		  <td><input type="text" class="input-text required-entry" value="<?php echo $deal_expire_date ?>" id="deal_expire_date" name="deal_expire_date"><span style="color:#F00"> *</span><img title="Select Date" id="deal_expire_date_trig" class="v-middle" src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_SKIN) . 'adminhtml/default/default/images/grid-cal.gif'; ?>">
+			<script type="text/javascript">
+            //<![CDATA[
+                Calendar.setup({
+                    inputField: "deal_expire_date",
+                    ifFormat: "%m/%e/%y",
+                    showsTime: false,
+                    button: "deal_expire_date_trig",
+                    align: "Bl",
+                    singleClick : true
+                });
+            //]]>
+            </script></td>
+		</tr>
+		<tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>		
+		<?php /*?><tr>
+          <td class="text3" height="35px">Time expired :</td>
+          <td class="text3" height="35px">
+		  <select name="expire-day">
+		  	<?php for($i=0;$i<=99;$i++) { ?><option value="<?php echo $i ?>"><?php echo $i ?></option><?php } ?>
+		  </select>Day
+		  <select name="expire-hour">
+		  	<?php for($i=0;$i<=23;$i++) { ?><option value="<?php echo $i ?>"><?php echo $i ?></option><?php } ?>
+		  </select>Hour
+		  <select name="expire-min">
+			  <?php for($i=0;$i<=59;$i++) { ?><option value="<?php echo $i ?>"><?php echo $i ?></option><?php } ?>
+		  </select>Min</td>
+        </tr><?php */?>		
+		<?php } ?>
+        <tr>
+          <td class="text3" height="35px"><?php echo $productTitle ?> Image:</td>
+          <td class="text3" height="35px">
+			
+			<?php if($id) { ?>
+				<?php $_images = Mage::getModel('catalog/product')->load($id)->getMediaGalleryImages();?>
+				<?php if($_images){?>			
+				   <?php $img=0; foreach($_images as $_image){ $img++;?>
+					  <img src="<?=$this->helper('catalog/image')->init($_product, 'thumbnail', $_image->getFile())->resize(150); ?>" width="150" />
+				   <?php }?>
+				<?php }?>
+				<?php if($product_image!='' and $img==0) {?><img src="<?php echo $product_image?>" width="150" /><br /><?php } ?>
+			<?php }?>
+			
+		    <input class="multi <?php if($id=='') echo '' ?>" id="product_image" type="file" name="product_image[]" maxlength="5" accept="jpg|png|gif" /></td>
+        </tr>
+        <!--<tr>
+          <td class="text3">Recommended</td>
+          <td><input type="checkbox" name="recommended" value="1"></td>
+        </tr>-->
+        <tr>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td><div id="Button" style="float:left; margin-right:5px">
+              <div>
+                <button class="button validation-passed"><span><span><?php echo $title; ?></span></span></button>
+              </div>
+            </div>
+            </td>
+        </tr>
+      </tbody>
+    </table>
+	
+	<?php if(is_numeric($id)) { ?>
+		<input type="hidden" name="product_update" value="yes" />
+	<?php } else { ?>
+		<input type="hidden" name="product_submit" value="yes" />
+	<?php } ?>
+	
+  </form>
+<script type="text/javascript">
+//<![CDATA[
+var dataForm = new VarienForm('form-validate-addproduct', true);
+//]]>
+</script>
+<?php } ?>  
+
+<?php
+if($groupName=='General' or $groupName=='Deal') {
+?>
+<script type="text/javascript">
+function delete_item(id,title){
+	var r=confirm("Do you want to delete item :"+title);
+	if (r==true)
+	{
+		var loc ='<?php echo Mage::getUrl('*/*/deleteProduct/'); ?>id/'+id;
+		//alert(loc);
+		window.location =loc;
+	}
+	else
+	{
+		return false;
+	} 		
+}
+</script>
+<style type="text/css">
+.txt-right{
+text-align:right;
+}
+</style>
+<div style="margin:20px 0px;">
+<table class="member-grid" width="100%" border="1" cellspacing="0" cellpadding="10">
+  <tr>
+    <th>Product Name</th>
+	<th><?php echo ($groupName=='Deal')?'Date':'Category'; ?></th>
+    <th width="60">Price</th>
+    <th width="40">Qty</th>
+	<?php if($groupName=='Deal') { ?>
+	<th width="50">Sold Qty</th>
+	<?php } ?>
+    <th width="67">Actions</th>
+  </tr>
+
+<?php 
+
+	function getQuantityOrderedBySku($sku)
+	{
+		try {
+			$_product = Mage::getResourceModel('reports/product_collection')
+				->addOrderedQty()
+				->addAttributeToFilter('sku', $sku)
+				->setOrder('ordered_qty', 'desc')
+				->getFirstItem();
+			if (!$_product) {
+				throw new Exception('No product matches the given SKU');
+			}
+			return (int) $_product->getOrderedQty();
+		} catch (Exception $e) {
+			return 0;
+		}
+	} 
+
+
+if($groupName=='General') {
+	//echo "child_cat_id=$child_cat_id";
+	$root_category = Mage::getModel('catalog/category')->load($child_cat_id);
+	$subcategories = $root_category->getChildren();
+	//var_dump($subcategories);
+	if($subcategories){
+		foreach(explode(',',$subcategories) as $subcategory) {
+			//echo $subcategory;
+			//continue;
+			$category = Mage::getModel('catalog/category')->load($subcategory);
+			//echo '<a href="'.$category->getURL() .'" />'.$category->getName().'</a><br/>';
+			$categroyid = $category->getId();
+			$fcat = Mage::getModel('catalog/category')->load($categroyid);
+			$_proCollection = Mage::getResourceModel('catalog/product_collection')
+							->addCategoryFilter($fcat)
+							->addAttributeToFilter('status',1);
+							//->addAttributeToSelect(array('name','id'));
+							
+			if(!empty($_proCollection))
+			{
+				foreach ($_proCollection as $ffproduct)
+				{  
+					$cur_fproduct = Mage::getModel('catalog/product')->load($ffproduct->getId());
+					?>
+					<tr>
+						<td><?php echo $cur_fproduct->getName() ?></td>
+						<td><?php echo $category->getName() ?></td>
+						<td><?php echo $cur_fproduct->getFormatedPrice(); //round($cur_fproduct->getPrice(),2) ?></td>
+						<td><?php //echo $cur_fproduct->getImageUrl(); 
+						echo (int) Mage::getModel('cataloginventory/stock_item')->loadByProduct($cur_fproduct)->getQty();
+						?></td>
+						<?php if($groupName=='Deal') { ?>
+						<td><?php 
+						$sku = $cur_fproduct->getSku();
+						echo getQuantityOrderedBySku($sku);
+						?></td>
+						<?php } ?>
+						<td>
+						<?php if($groupName=='Deal') { ?>
+						<a title="View" href="<?php echo $this->getUrl('customer/orderdetails/index/id/'.$cur_fproduct->getId()); ?>"><img width="16" height="16" src="<?php echo $this->getSkinUrl('images/icon-view16.png'); ?>" alt="view" /></a>&nbsp;&nbsp; <?php } ?>
+						<a title="Edit" href="<?php echo $this->getUrl('customer/addproduct/index/id/'.$cur_fproduct->getId()); ?>"><img width="16" height="16" src="<?php echo $this->getSkinUrl('images/icon-edit16.png'); ?>" alt="edit" /></a>&nbsp;&nbsp;
+						<a title="Delete" onclick="delete_item('<?php echo $cur_fproduct->getId() ?>','<?php echo $cur_fproduct->getName() ?>');" href="#del"><img width="16" height="16" src="<?php echo $this->getSkinUrl('images/icon-del16.png'); ?>" alt="del" /></a></td>
+						
+					</tr>
+					<?php
+				}
+			}
+		}//foreach
+	}
+}//General
+
+if($groupName=='Deal') {
+
+	$_proCollection = Mage::getResourceModel('catalog/product_collection')
+					//->addCategoryFilter($fcat)
+					->addAttributeToFilter('status',1)
+					->addAttributeToFilter('customer_id',$currentCustomerId);
+					//->addAttributeToSelect(array('name','id'));
+					
+	if(!empty($_proCollection))
+	{
+		foreach ($_proCollection as $ffproduct)
+		{  
+			$cur_fproduct = Mage::getModel('catalog/product')->load($ffproduct->getId());
+			?>
+			<tr>
+				<td><?php echo $cur_fproduct->getName() ?></td>
+				<td><?php echo 'Start: '.$cur_fproduct->getNewsFromDate() ?><br />
+				<?php echo 'End: '.$cur_fproduct->getNewsToDate() ?></td>
+				<td><?php echo $cur_fproduct->getFormatedPrice(); //round($cur_fproduct->getPrice(),2) ?></td>
+				<td><?php //echo $cur_fproduct->getImageUrl(); 
+				echo (int) Mage::getModel('cataloginventory/stock_item')->loadByProduct($cur_fproduct)->getQty();
+				?></td>
+				<?php if($groupName=='Deal') { ?>
+				<td><?php 
+				$sku = $cur_fproduct->getSku();
+				echo getQuantityOrderedBySku($sku);
+				?></td>
+				<?php } ?>
+				<td>
+				<?php 
+				$urlPrefix = '';
+				if($groupName=='Deal') { 
+				$urlPrefix = '?deal_type=product';
+				?>
+				<a title="View" href="<?php echo $this->getUrl('customer/orderdetails/index/id/'.$cur_fproduct->getId()); ?>"><img width="16" height="16" src="<?php echo $this->getSkinUrl('images/icon-view16.png'); ?>" alt="view" /></a>&nbsp;&nbsp; <?php } ?>
+				<a title="Edit" href="<?php echo $this->getUrl('customer/addproduct/index/id/'.$cur_fproduct->getId()).$urlPrefix; ?>"><img width="16" height="16" src="<?php echo $this->getSkinUrl('images/icon-edit16.png'); ?>" alt="edit" /></a>&nbsp;&nbsp;
+				<a title="Delete" onclick="delete_item('<?php echo $cur_fproduct->getId() ?>','<?php echo $cur_fproduct->getName() ?>');" href="#del"><img width="16" height="16" src="<?php echo $this->getSkinUrl('images/icon-del16.png'); ?>" alt="del" /></a></td>
+			</tr>
+			<?php
+		}
+	}
+}//Deal
+?>
+</table>
+</div>
+<?php
+}//general or deal
+?>

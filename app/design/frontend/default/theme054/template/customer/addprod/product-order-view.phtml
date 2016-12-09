@@ -1,0 +1,123 @@
+<div class="page-title">
+  <h1>Order Details</h1>
+</div>
+
+<?php
+$orderId = $this->getRequest()->getParam('id', false);
+
+if( is_numeric($orderId) ) {
+	$order = Mage::getModel('sales/order')->load($orderId);
+
+	//$item = $order->getItemById($itemId);
+	//$shipmentStatus = $item->getStatus();
+	
+?>
+
+<table class="member-grid" width="100%" border="1" cellspacing="0" cellpadding="0">
+  <tr>
+    <td>Order Id</td>
+    
+    <td><?php echo $order->getRealOrderId(); ?></td>
+  </tr>
+  <tr>
+    <td>Created At</td>
+    <td><?php echo $order->getCreatedAtFormated('medium'); ?></td>
+  </tr>
+  <tr>
+    <td>Order Status</td>
+    <td><?php echo $order->getStatusLabel(); ?></td>
+  </tr>
+<?php /*?>  <tr>
+    <td>Shipment Status</td>
+    <td>:</td>
+    <td><?php echo $shipmentStatus; ?></td>
+  </tr><?php */?>
+  
+</table>
+
+<br />
+<br />
+
+<table class="member-grid" width="100%" border="1" cellspacing="0" cellpadding="0">
+  <tr>
+  	<th>Deal Id</th>
+	<th>Deal Title</th>
+	<th>Price</th>
+	<th>Qty</th>
+	<th>Total</th>
+  </tr>
+<?php  
+$_items = $order->getItemsCollection();
+foreach($_items as $_item)
+{ 
+?>
+  <tr>
+  	<td><?php echo $_item->getSku() ?></td>
+  	<td><?php echo $_item->getName() ?></td>
+	<td><?php echo $order->formatPrice( $_item->getOriginalPrice() )?></td>
+	<td><?php echo $_item->getQtyToInvoice() ?></td>
+	<td><?php echo $order->formatPrice( $order->getSubtotal() )?></td>
+  </tr>
+	
+<?php	
+}
+?>
+  <tr>
+	<td style="text-align:right" colspan="4">Shipping Amount : </td>
+	<td><?php echo $order->formatPrice( $order->getShippingAmount() ); ?></td>
+  </tr>
+  <tr>
+	<td style="text-align:right" colspan="4">Tax Amount : </td>
+	<td><?php echo $order->formatPrice( $order->getTaxAmount() ); ?></td>
+  </tr>
+  <tr>
+	<td style="text-align:right" colspan="4">Total : </td>
+	<td><?php echo $order->formatPrice( $order->getGrandTotal() ); ?></td>
+  </tr>
+</table>
+
+
+<br />
+<br />
+
+<table class="member-grid" width="100%" border="1" cellspacing="0" cellpadding="0">
+	<tr>
+		<td>
+		<strong>Billing Information</strong><br /><br />
+		<?php 
+		$billingId = $order->getBillingAddress()->getId();
+		$_billingAddress = Mage::getModel('sales/order_address')->load($billingId);
+		echo $_billingAddress->getFirstname() .' '.	$_billingAddress->getLastname() . '<br />';
+		echo $_billingAddress->getCompany() . '<br />';
+		echo $_billingAddress->getStreetFull() . '<br />';
+		echo $_billingAddress->getRegion() . '<br />';
+		echo $_billingAddress->getCity() . '<br />';
+		echo $_billingAddress->getPostcode() . '<br />';
+		echo $_billingAddress->getCountry_id() . '<br /><br />';
+		//echo 'Phone : '.$_billingAddress->getTelephone() . '<br />';
+		?></td>
+		<td>
+		<strong>Shipping Information</strong><br /><br />
+		<?php 
+		//$shipping_address = $order->getShippingAddress();
+		//print_r($shipping_address->getData());
+		$shippingId = $order->getShippingAddress()->getId();
+		$_shippingAddress = Mage::getModel('sales/order_address')->load($shippingId);
+		echo $_shippingAddress->getFirstname() .' '.$_shippingAddress->getLastname() . '<br />';
+		echo $_shippingAddress->getCompany() . '<br />';
+		echo $_shippingAddress->getStreetFull() . '<br />';
+		echo $_shippingAddress->getRegion() . '<br />';
+		echo $_shippingAddress->getCity() . '<br />';
+		echo $_shippingAddress->getPostcode() . '<br />';
+		echo $_shippingAddress->getCountry_id() . '<br /><br />';
+		echo 'Phone : '.$_shippingAddress->getTelephone() . '<br />';
+		echo 'Email : '.$_shippingAddress->getEmail() . '<br />';
+		?></td>
+	</tr>
+</table>
+<?php 
+}
+?>
+<br />
+<br />
+<a href="javascript:history.back();">Go Back</a>

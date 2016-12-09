@@ -1,0 +1,27 @@
+<?php
+$controller = Mage::app()->getRequest()->getControllerName();
+$module = Mage::app()->getRequest()->getModuleName();
+$action = Mage::app()->getRequest()->getActionName();
+
+$currentCustomerId = Mage::getSingleton('customer/session')->getCustomer()->getId();
+
+if($action=='send')
+{
+	include_once('sms-send.phtml');
+}//send
+
+if($action=='guideline')
+{
+	include_once('sms-guideline.phtml');
+}//guideline
+
+if($action=='contactgroup')
+{
+	include_once('contactgroup.phtml');
+}
+if($action=='addcontact')
+{
+	include_once('addcontact.phtml');
+}
+
+?>

@@ -1,0 +1,24 @@
+<?php
+
+$collection = Mage::getModel('catalog/product')->getCollection();
+
+//$collection->addAttributeToFilter('status', 1);
+//$collection->addAttributeToFilter('visibility', 4);
+//$collection->addAttributeToFilter('type_id', 'simple');
+$collection->addAttributeToFilter('attribute_set_id', '4');
+$collection->addAttributeToSelect('*');
+$collection->setOrder('created_at', 'desc');
+	
+//$collection = Mage::getModel('catalog/product')->getCollection();
+//$collection
+//->addAttributeToSelect(Mage::getSingleton('catalog/config')->getProductAttributes())
+//->setOrder('created_at', 'desc');
+
+//Mage::getSingleton('catalog/product_status')->addVisibleFilterToCollection($collection);
+//Mage::getSingleton('catalog/product_visibility')->addVisibleInCatalogFilterToCollection($collection);
+
+
+$magento_block = Mage::getSingleton('core/layout');
+$productsHtml  = $magento_block->createBlock('catalog/product_list');
+$productsHtml->setTemplate('catalog/product/latest.phtml')->setCollection($collection);
+echo $productsHtml ->toHTML();

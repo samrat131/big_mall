@@ -1,0 +1,18 @@
+<?php
+$controller = Mage::app()->getRequest()->getControllerName();
+$module = Mage::app()->getRequest()->getModuleName();
+$action = Mage::app()->getRequest()->getActionName();
+
+$currentCustomerId = Mage::getSingleton('customer/session')->getCustomer()->getId();
+
+if($action=='index')
+{
+	include_once('product-order.phtml');
+}
+
+if($action=='view')
+{
+	include_once('product-order-view.phtml');
+}
+
+?>

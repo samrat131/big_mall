@@ -1,0 +1,30 @@
+<?xml version="1.0" ?>
+<config>
+    <menu>
+		<cms>
+            <children>
+                <sliders translate="title" module="sliders">
+                    <title>Home Slider</title>
+                    <sort_order>101</sort_order>
+                    <action>sliders/admin</action>
+                </sliders>
+            </children>
+		</cms>
+    </menu>
+    <acl>
+        <resources>
+			<admin>
+				<children>
+					<cms>
+						<children>
+							<sliders translate="title" module="sliders">
+								<title>Home Slider</title>
+								<sort_order>101</sort_order>
+							</sliders>
+						</children>
+					</cms>
+				</children>
+			</admin>
+        </resources>
+    </acl>
+</config>

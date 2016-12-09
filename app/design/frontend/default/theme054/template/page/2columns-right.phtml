@@ -1,0 +1,142 @@
+<?php
+/**
+ * Magento
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Academic Free License (AFL 3.0)
+ * that is bundled with this package in the file LICENSE_AFL.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/afl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Magento to newer
+ * versions in the future. If you wish to customize Magento for your
+ * needs please refer to http://www.magentocommerce.com for more information.
+ *
+ * @category    design
+ * @package     base_default
+ * @copyright   Copyright (c) 2010 Magento Inc. (http://www.magentocommerce.com)
+ * @license     http://opensource.org/licenses/afl-3.0.php  Academic Free License (AFL 3.0)
+ */
+?>
+<?php
+/**
+ * Template for Mage_Page_Block_Html
+ */
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?php echo $this->getLang() ?>" lang="<?php echo $this->getLang() ?>">
+<head>
+<?php echo $this->getChildHtml('head') ?>
+</head>
+<body<?php echo $this->getBodyClass()?' class="'.$this->getBodyClass().'"':'' ?>>
+<?php echo $this->getChildHtml('after_body_start') ?>
+<?php /*?><div class="block-bg">
+    <div class="bg-left">&nbsp;</div>   <!--left taling -->
+    <div class="bg-right">&nbsp;</div>   <!--right_taling -->
+</div>
+<div class="block-main">
+    <div class="wrapper">
+        <?php echo $this->getChildHtml('global_notices') ?>
+        <div class="page">
+            <?php echo $this->getChildHtml('header') ?>
+            <div class="main-container col2-right-layout">
+                <div class="main">
+                    <?php echo $this->getChildHtml('breadcrumbs') ?>
+                    <div class="col-main">
+                    	<div class="bg-main">
+                        	<div class="indent-main">
+								<?php echo $this->getChildHtml('global_messages') ?>
+								
+								<?php 
+								$pageTitle = Mage::getSingleton('cms/page')->getIdentifier(); 
+								if($pageTitle == 'home' ) { 
+								echo $this->getLayout()->createBlock('cms/block')->setBlockId('home_slider')->toHtml();
+								} ?>
+                                <?php echo $this->getChildHtml('content') ?>
+								
+								<?php 
+								$pageTitle = Mage::getSingleton('cms/page')->getIdentifier();
+								if($pageTitle == 'home')
+									echo $this->getLayout()->createBlock('cms/block')->setBlockId('banner')->toHtml();
+								?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-right sidebar"><?php echo $this->getChildHtml('right') ?></div>
+                </div>
+            </div>
+            <?php echo $this->getChildHtml('footer') ?>
+            <?php echo $this->getChildHtml('before_body_end') ?>
+        </div>
+    </div>
+</div><?php */?>
+
+<div class="wrap">
+
+	<?php echo $this->getChildHtml('global_notices') ?>
+	
+	<?php echo $this->getChildHtml('header') ?>
+
+	<div class="block-body">
+    	<div class="left">
+			<?php echo $this->getChildHtml('global_messages') ?>
+			
+			<?php 
+			$pageTitle = Mage::getSingleton('cms/page')->getIdentifier(); 
+			if($pageTitle == 'home' ) { ?>
+				<?php echo $this->getLayout()->createBlock('cms/block')->setBlockId('home_slider')->toHtml(); ?>
+				<?php echo $this->getLayout()->createBlock('cms/block')->setBlockId('banner-mid-body')->toHtml(); ?>
+				<?php echo $this->getLayout()->createBlock('cms/block')->setBlockId('banner-under-mid-body')->toHtml(); ?>
+				
+				<div class="left-body">
+					<div class="hot-product">
+						<img src="<?php echo $this->getSkinUrl('images/'); ?>bigmall-hot-product.png" alt="Hot Product" />
+					</div>
+					<div style="margin-top:5px; border-bottom:#000000 27px solid;">
+					<?php echo $this->getLayout()->createBlock('cms/block')->setBlockId('latest-product-list')->toHtml(); ?>
+					<div align="right" style="padding:6px;">
+						<a href="<?php echo $this->getUrl('product'); ?>"><button class="button btn-cart" type="button"><span><span>Show More</span></span></button></a>
+					</div>
+					</div>
+				</div>
+				
+			<?php } else { ?>
+				<div class="content-body">
+				<?php echo $this->getChildHtml('content') ?>
+				</div>
+			<?php } ?>
+			
+        </div>
+        <div class="right">
+			<div class="right-top-box">
+				<div class="login">
+					<img src="<?php echo $this->getSkinUrl('images/'); ?>bigmall-fish.png" alt="Fish" class="fish" />
+					<h2>SUBMIT <a href="<?php echo $this->getUrl('customer/addproduct/'); ?>">'A'</a> DEAL</h2>
+					<div class="font2">Subscribe your promotion NOW</div>
+				</div>
+				<div class="login">
+					<a href="<?php echo $this->getUrl('customer/account/login/'); ?>"><img src="<?php echo $this->getSkinUrl('images/'); ?>bigmall-now.png" alt="Now" style="float:right; margin-right:60px; margin-top:7px" /></a>
+					<h3>Seller Log In</h3>
+				</div>
+				<div class="login">
+					<a href="<?php echo $this->getUrl('customer/account/login/'); ?>"><img src="<?php echo $this->getSkinUrl('images/'); ?>bigmall-now2.png" alt="Now" style="float:right; margin-right:45px; margin-top:6px" border="0" /></a>
+					<h3>Member Log In</h3>
+					<div class="font3"><a href="<?php echo $this->getUrl('customer/account/create/'); ?>">Sign up NOW</a></div>
+				</div>
+			</div>
+			<?php echo $this->getChildHtml('right') ?>
+        </div>
+	</div>
+	
+	<?php echo $this->getChildHtml('footer') ?>
+	<?php echo $this->getChildHtml('before_body_end') ?>	
+</div>
+<?php echo $this->getAbsoluteFooter() ?>
+</body>
+</html>

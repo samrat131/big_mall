@@ -1,0 +1,21 @@
+<?php
+/* get cart items total in header.phtml */
+  echo $_cartQty = Mage::getSingleton('checkout/cart')->getSummaryQty();
+  echo 'items';
+
+/*  $count = $this->helper('checkout/cart')->getSummaryCount();  //get total items in cart
+  $total = $this->helper('checkout/cart')->getQuote()->getGrandTotal(); //get total price
+  if($count==0)
+  {
+	echo $this->__('<a href="/checkout/cart" class="cartgo">(0 ITEMS)</a>',$count);
+  }
+  if($count==1)
+  {
+	echo $this->__('<a href="/checkout/cart" class="cartgo">(1 ITEM)</a>',$count);
+  }
+  if($count>1)
+  {
+	echo $this->__('<a href="/checkout/cart" class="cartgo">(%s ITMES)</a>',$count);
+  }
+  echo $this->__('', $this->helper('core')->formatPrice($total, false));
+*/  

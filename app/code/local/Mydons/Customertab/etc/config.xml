@@ -1,0 +1,42 @@
+<config>
+   <modules>
+       <Mydons_Customertab>
+           <version>0.1.0</version>
+       </Mydons_Customertab>
+   </modules>
+   
+   <global>
+       <blocks>
+           <customertab>
+               <class>Mydons_Customertab_Block</class>
+           </customertab>
+       </blocks>
+        <models>
+            <customertab>
+                <class>Mydons_Customertab_Model</class>
+            </customertab>
+        </models>
+	</global>
+   
+   
+ 	<adminhtml>
+    	<layout>
+           <updates>
+               <customertab>
+                  <file>customertab.xml</file>
+               </customertab>
+           </updates>
+       </layout>
+		<events>
+            <adminhtml_customer_save_after>
+                <observers>
+                    <mydons_save_customer_data>
+                        <type>singleton</type>
+                        <class>customertab/observer</class>
+                        <method>saveProductTabData</method>
+                    </mydons_save_customer_data>
+                </observers>
+            </adminhtml_customer_save_after>
+        </events>	   
+   </adminhtml> 
+</config>
